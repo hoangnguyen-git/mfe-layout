@@ -65,20 +65,20 @@ export default () => {
     localStorage.setItem('isLoggedIn', false);
     localStorage.removeItem('authToken');
     setIsLoggedIn(false);
-    window.location.href = "http://localhost:3000/products/";
+    window.location.href = "https://e-commerce-microfrontend-api-b3671a39f1e5.herokuapp.com/products/";
   }
 
   return (
     <S.Header>
       <div className='container'>
         <S.Content>
-          <a href="http://localhost:3000/products/">
+          <a href="https://e-commerce-microfrontend-api-b3671a39f1e5.herokuapp.com/products/">
             <Heading4>CBP Marketplace</Heading4>
           </a>
           {
             isLoggedIn ?
               <div>
-                <S.CartLink id="go-to-cart" href="http://localhost:3000/cart/">
+                <S.CartLink id="go-to-cart" href="https://e-commerce-microfrontend-api-b3671a39f1e5.herokuapp.com/cart/">
                   Cart
                   {
                     itemsInCart.length > 0 &&
