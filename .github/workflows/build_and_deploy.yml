@@ -1,0 +1,126 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      - "main"
+
+jobs:
+  test_and_build:
+    name: Test and Build
+    runs-on: ubuntu-latest
+
+    # strategy:
+    #   matrix:
+    #     node-version: [14.x]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v1
+
+      - name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Install Dependencies
+        run: npm i
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: distribution
+          path: ./dist
+
+  dev_delpoy:
+    name: Dev Deploy
+    needs: test_and_build
+    runs-on: ubuntu-latest
+    environment:
+      name: dev
+      url: https://layout-mfe-demo-dev.netlify.app
+
+    steps:
+      - name: Download Latest Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: distribution
+          path: dist
+
+      - name: Deploy to Netlify Dev
+        uses: nwtgck/actions-netlify@v1.2
+        with:
+          publish-dir: "./dist"
+          production-branch: main
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "${{ github.event.workflow_run.head_sha }} ${{ github.event.head_commit.message }}"
+          enable-pull-request-comment: false
+          enable-commit-comment: true
+          overwrites-pull-request-comment: true
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        timeout-minutes: 1
+
+  staging_delpoy:
+    name: Staging Deploy
+    needs: dev_delpoy
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://layout-mfe-staging.netlify.app
+
+    steps:
+      - name: Download Latest Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: distribution
+          path: dist
+
+      - name: Deploy to Netlify Staging
+        uses: nwtgck/actions-netlify@v1.2
+        with:
+          publish-dir: "./dist"
+          production-branch: main
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "${{ github.event.workflow_run.head_sha }} ${{ github.event.head_commit.message }}"
+          enable-pull-request-comment: false
+          enable-commit-comment: true
+          overwrites-pull-request-comment: true
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        timeout-minutes: 1
+
+  prod_delpoy:
+    name: Prod Deploy
+    needs: staging_delpoy
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://layout-mfe.netlify.app
+
+    steps:
+      - name: Download Latest Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: distribution
+          path: dist
+
+      - name: Deploy to Netlify Prod
+        uses: nwtgck/actions-netlify@v1.2
+        with:
+          publish-dir: "./dist"
+          production-branch: main
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "${{ github.event.workflow_run.head_sha }} ${{ github.event.head_commit.message }}"
+          enable-pull-request-comment: false
+          enable-commit-comment: true
+          overwrites-pull-request-comment: true
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        timeout-minutes: 1
